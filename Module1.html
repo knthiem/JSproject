@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+<Title>Module 1</Title>
+</head>
+
+<body>
+	
+	<div class="navbar navbar-default">
+		<div class="container">
+			<div class="navbar navbar-header">
+				<a class="navbar-brand">Final Project</a>
+			</div>
+			<div class="navbar-collapse navbar-collapse">
+				<ul class="nav navbar-nav navbar-right">
+					<li><a href="index.html">Home</a></li>
+					<li class="active"><a href="#">Module 1 & 2</a></li>
+					<li><a href="Module3.html">Module 3</a></li>
+				</ul>
+			</div>
+		<div>
+	</div>
+
+
+	<div class="container-fluid">
+		<div class="jumbotron jumbotron-fluid">
+			<h1 class="display-4">NYTimes API</h1>
+  			<p class="lead">Here you may type the title of a movie and search for reviews published by critics of New York Times.</p>
+  			<p>Search movie reviews</p>
+			<input type = "text" id = "UserInput"/> 
+			<button id="search" onclick = "searchReviews()">Search</button>
+			<button onclick = "reduceSearch()">Reviews from the last 7 days</button>
+			<button onclick = "filterSearch()">Today's published review(s)</button>
+		</div>
+	</div>
+
+
+	<div class="container-fluid">
+		<table class="table">
+			<thead id = "tableH">
+				
+			</thead>
+			
+			<tbody id="list">
+
+			</tbody>
+		</table>
+	</div>
+
+	<div class="footer-copyright text-center">&copy 2018 Copyright Kenny Nanthavong No Rights Reserved</div>
+	
+	<script>
+		"use strict";
+
+		let jObj;
+		let strOut = "";
+		let imgLink = "";
+		let d = new Date();
+		let today = (d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + "0" + d.getDate()).toString();
+		let lastWeek = (d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + "0" + (d.getDate() - 7)).toString();
+
+		function searchReviews(){
+			document.getElementById("tableH").innerHTML = 
+					"<tr>"
+					+"<th scope=col>Link</th>"
+					+"<th scope=col>Title</th>"
+					+"<th scope=col>Opening Date</th>"
+					+"<th scope=col>Rating</th>"
+					+"<th scope=col>Author</th>"
+					+"<th scope=col>Headline</th>"
+					+"<th scope=col>Summary</th>"
+					+"</tr>"
+			strOut = "";
+			let input = document.getElementById("UserInput").value;
+			var url = "https://api.nytimes.com/svc/movies/v2/reviews/search.json";
+			url += '?' + $.param({
+					'api-key': "2372696857234c8caa89a5f099cfa9b6"
+			});
+			url += '&query=' + input;
+			$.ajax({
+					url: url,
+					method: 'GET',
+			}).done(function(result) {
+				storeData(result);
+				console.log(result);
+				if(jObj.length > 0){
+					jObj.forEach(printResult);
+				}
+				else {
+					strOut = "No result found."
+				}
+				document.getElementById("list").innerHTML = strOut;
+				}).fail(function(err) {
+					throw err;
+				});
+		}
+
+		function storeData(data){
+			jObj = data.results;
+			console.log(jObj);
+		}
+
+		function printResult(movieReview){
+			let imgLink = "";
+			if(movieReview.multimedia !== null){
+				imgLink = movieReview.multimedia.src;
+			}
+			strOut += "<tr><td><a href =" + movieReview.link.url + "><img alt=\'Link to review\' src=" + imgLink + "></a></td>" 
+			+ "<td>" +  movieReview.display_title + "</td>"
+			+ "<td>" + movieReview.opening_date + "</td>" 
+			+ "<td>" + movieReview.mpaa_rating + "</td>" 
+			+ "<td>" +  movieReview.byline + "</td>" 
+			+ "<td>"+ movieReview.headline + "</td>" 
+			+ "<td>" + movieReview.summary_short + "</td></tr>";
+		}
+		
+		function reduceSearch(){
+			document.getElementById("tableH").innerHTML = 
+					"<tr>"
+					+"<th scope=col>Link</th>"
+					+"<th scope=col>Title</th>"
+					+"<th scope=col>Opening Date</th>"
+					+"<th scope=col>Rating</th>"
+					+"<th scope=col>Author</th>"
+					+"<th scope=col>Headline</th>"
+					+"<th scope=col>Summary</th>"
+					+"</tr>"
+			var url = "https://api.nytimes.com/svc/movies/v2/reviews/search.json";
+			url += '?' + $.param({
+			'api-key': "2372696857234c8caa89a5f099cfa9b6",
+			});
+			url += '&publication-date:' + today + ';' + lastWeek;
+			$.ajax({
+			url: url,
+			method: 'GET',
+			}).done(function(result) {
+			storeData(result);
+			console.log(result);
+			if(jObj.length > 0){
+					strOut = jObj.reduce(generateOut, "");
+				}
+				else {
+					strOut = "No result found."
+				}
+			document.getElementById("list").innerHTML = strOut;
+			}).fail(function(err) {
+			throw err;
+			});
+		}
+		
+		function generateOut(total, movieReview){
+			let imgLink = "";
+			if(movieReview.multimedia !== null){
+				imgLink = movieReview.multimedia.src;
+			}
+			
+			return total + "<tr><td><a href =" + movieReview.link.url + "><img alt=\'Link to review\' src=" + imgLink + "></a></td>" 
+			+ "<td>" +  movieReview.display_title + "</td>"
+			+ "<td>" + movieReview.opening_date + "</td>" 
+			+ "<td>" + movieReview.mpaa_rating + "</td>" 
+			+ "<td>" +  movieReview.byline + "</td>" 
+			+ "<td>"+ movieReview.headline + "</td>" 
+			+ "<td>" + movieReview.summary_short + "</td></tr>";
+		}
+		
+		function filterSearch(){
+			document.getElementById("tableH").innerHTML = 
+					"<tr>"
+					+"<th scope=col>Link</th>"
+					+"<th scope=col>Title</th>"
+					+"<th scope=col>Opening Date</th>"
+					+"<th scope=col>Rating</th>"
+					+"<th scope=col>Author</th>"
+					+"<th scope=col>Headline</th>"
+					+"<th scope=col>Summary</th>"
+					+"</tr>"
+			var url = "https://api.nytimes.com/svc/movies/v2/reviews/search.json";
+			url += '?' + $.param({
+			'api-key': "2372696857234c8caa89a5f099cfa9b6",
+			});
+			url += '&publication-date:' + today;
+			$.ajax({
+			url: url,
+			method: 'GET',
+			}).done(function(result) {
+			storeData(result);
+			console.log(result);
+			let reviewToday = jObj.filter(isToday);
+			console.log(reviewToday);
+			if(reviewToday.length > 0){
+					reviewToday.forEach(printResult);
+				}
+				else {
+					strOut = "No result found."
+				}
+			document.getElementById("list").innerHTML = strOut;
+			}).fail(function(err) {
+			throw err;
+			});
+		}
+		
+		function isToday(movieReview){
+			return movieReview.publication_date.toString() == today;
+		}
+
+		$(document).ready(function(){
+    		$('#UserInput').keypress(function(e){
+      			if(e.keyCode==13)
+      				$('#search').click();
+    		});
+		});
+	</script>
+
+</body>
+
+</html>
